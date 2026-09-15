@@ -6,6 +6,8 @@ import lombok.Setter;
 
 import java.util.List;
 
+
+
 @Entity
 @Getter
 @Setter
@@ -17,4 +19,6 @@ public class Department {
 
     private String deptName;
 
+    @Embedded
+    private AuditInfo auditInfo;
 }
