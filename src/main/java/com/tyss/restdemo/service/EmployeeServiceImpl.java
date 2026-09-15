@@ -13,7 +13,7 @@ import com.tyss.restdemo.repository.EmployeeDocsRepository;
 
 import com.tyss.restdemo.repository.LeaveBalanceRepository;
 import com.tyss.restdemo.util.EmployeeMapper;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -150,6 +150,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+    @Transactional
     public EmployeeV2Response saveEmployeeV2(EmployeeV2Request employeeV2Request) {
         log.info("Saving new employee with email: {}", employeeV2Request.getEmail());
 
@@ -237,7 +238,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = IOException.class,timeout = 10)
     public EmployeeDocs saveEmployeeV3(EmployeeV2Request employeeV2Request, MultipartFile file) {
 
         // 1. Save employee
@@ -321,7 +322,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         return EmployeeMapper.entityToDto(savedEmployee);
     }
 
-
+    @Transactional(readOnly = true)
     @Override
     @Cacheable(value = "employees", key = "#id")
     public EmployeeResponse getEmployeeByIdV4(Integer id) {
@@ -352,8 +353,18 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
 
+
+    /*
+
+
+    Even though this exception normally causes a rollback, I want this transaction to COMMIT.
+
+
+     */
+
     @Override
     @CachePut(value = "employees", key = "#id")
+    @Transactional(noRollbackFor = DuplicateResourceException.class)
     public EmployeeResponse updateEmployeeV4(
             Integer id,
             EmployeeRequest employeeRequest) {
@@ -422,7 +433,6 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         log.info("Successfully deleted employee with ID: {}", id);
     }
-
 }
 
 
